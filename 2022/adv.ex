@@ -109,5 +109,89 @@ defmodule Adv do
 	1 + 6
     end
   end
+
+
+  def day3a() do
+    File.stream!("day3.csv") |>
+      Stream.map( fn (r) -> String.to_charlist(r) end) |>
+      Stream.map(fn (r) -> Enum.drop(r, -1) end) |>
+      Stream.map(fn(r) -> Enum.split(r, div(length(r),2)) end) |>
+      Stream.map(fn({l,r}) -> {Enum.sort(l), Enum.sort(r)} end) |>
+      Enum.reduce([], fn({l,r}, a) -> [duplicate(l,r)|a] end) |>
+      Enum.reduce(0, fn(c, a) -> cond do
+	  c <= 90 -> a + c - 65 + 27
+	  c >= 97 -> a +  c - 97 + 1
+	end
+      end)
+  end
+
+  def day3b() do
+    File.stream!("day3.csv") |>
+      Stream.map( fn (r) -> String.to_charlist(r) end) |>
+      Stream.map(fn (r) -> Enum.drop(r, -1) end) |>
+      Enum.reduce([], fn(r, a) ->
+	case a do
+	  {2, t, a} -> [[r|t]| a]
+	  {1, t, a} -> {2, [r|t], a}
+	  a -> {1, [r], a}
+	end
+      end) |>
+      Stream.map(fn([l,r,q]) -> {Enum.sort(l), Enum.sort(r), Enum.sort(q)} end) |>
+      Enum.reduce([], fn({l,r,q}, a) -> [triplet(l,r,q)|a] end) |>
+      Enum.reduce(0, fn(c, a) ->
+	cond do
+	  c <= 90 -> a + c - 65 + 27
+	  c >= 97 -> a +  c - 97 + 1
+	end
+      end)
+
+
+
+
+  end
+  
+  def duplicate([a|_],[a|_]) do a end
+  def duplicate([a|l],[b|_]=r) when a < b do duplicate(l,r) end
+  def duplicate(l,[_|r])  do duplicate(l,r) end
+
+  def triplet([a|_],[a|_],[a|_]) do a end
+  def triplet([a|l],[b|_]=r,[c|_]=q) when a <= b and a <= c do triplet(l,r,q) end
+  def triplet([a|_]=l,[b|r],[c|_]=q) when b <= a and b <= c do triplet(l,r,q) end
+  def triplet(l,r,[_|q]) do triplet(l,r,q) end  
+
+  ## Day 4, no problem. One could write it even more compact by
+  ## stransforming the list of strings from the splot oepration to a
+  ## list of integers using a map operation.
+
+  def day4() do
+    File.stream!("day4.csv") |>    
+      Stream.map( fn (r) ->
+	[a1, a2, b1, b2] = String.split(r, [",","-"])
+	{a1,_} = Integer.parse(a1)
+	{a2,_} = Integer.parse(a2)	
+	{b1,_} = Integer.parse(b1)
+	{b2,_} = Integer.parse(b2)	
+	{a1, a2, b1, b2}
+      end)
+  end    
+
+  def day4a() do
+    day4() |>
+      Stream.filter(fn({a1,a2,b1,b2}) ->
+	(a1 <= b1 and a2 >= b2) or (a1 >= b1 and a2 <= b2)
+      end) |>
+      Enum.reduce(0, fn(_,a) -> a + 1 end)
+  end
+
+  def day4b() do
+    day4() |>
+      Stream.filter(fn({a1,a2,b1,b2}) ->
+	(a1 <= b1 and a2 >= b1) or
+	(a1 <= b2 and a2 >= b2) or
+	(a1 >= b1 and a2 <= b2)
+      end) |>
+      Enum.reduce(0, fn(_,a) -> a + 1 end)
+  end
+
   
 end
