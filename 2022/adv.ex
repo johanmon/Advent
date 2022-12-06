@@ -328,11 +328,11 @@ defmodule Adv do
     {:ok, n+4}
   end
   
-  def day6b() do
+  def day6b(k) do
     {:ok,input} = File.read("day6.csv")
     <<a,b,c,d, rest::binary>> = input
     {_, n, rest} = marker(a, b, c, d, rest, 0)
-    {:ok, c, _} = message(to_charlist(rest), 14, 0)
+    {:ok, c, _} = message(to_charlist(rest), k, 0)
     {:ok, c + n}
   end
     
@@ -387,7 +387,46 @@ defmodule Adv do
     end
   end
   
-  
+  ## A test to see if we can do better by simply sorting the
+  ## sequence. The solution might be a bit easier to follow; we first
+  ## take a subsequence of 14 (k) characters, number them and sort
+  ## them alphabetically. Now we can simplu scan the sorted sequence
+  ## (in msg2) looking for the duplicate with the higeste index (if we
+  ## have one duplicate at position 2 and 6 and another at 5 and 9 we
+  ## return 5 i.e. the number of characters that we can skip. 
+  ##
+  ## The solution does have a better complexity O(n*k*lg(k)) compared
+  ## to O(n*k^2) but does not outperform the first solution (at least
+  ## not for k = 14).
+
+  def day6bb(k) do
+    {:ok,input} = File.read("day6.csv")
+    <<a,b,c,d, rest::binary>> = input
+    {_, n, rest} = marker(a, b, c, d, rest, 0)
+    {:found, c, _} = message2(to_charlist(rest), k, 0)
+    {:ok, c + n}
+  end
+
+  def message2(seq, k, n) do
+    first = Enum.take(seq, k)
+    {0, first} = List.foldr(first, {k,[]}, fn(c,{i,a}) -> {i-1, [{c,i}|a]} end)
+    first = Enum.sort(first, fn({x,_},{y,_}) -> x < y end)
+    case msg2(first, 0) do
+      :found -> {:found,  n+k, Enum.drop(seq, k)}
+      {:cont, j} -> message2(Enum.drop(seq, j), k, n+j)
+    end
+  end
+
+  def msg2([_], 0) do :found end
+  def msg2([_], m) do {:cont, m} end  
+  def msg2([{a,i}|[{a,j}|_]=rest], m) do
+    msg2(rest,  max(m, min(i,j)))
+  end
+  def msg2([_|rest], m) do
+    msg2(rest, m)
+  end  
+      
+    
 
 
 end
