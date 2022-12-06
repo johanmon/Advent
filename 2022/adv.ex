@@ -307,4 +307,89 @@ defmodule Adv do
   end  
 
 
+  ##  Day 6 first part was a quick and dirty implementation since we
+  ##  only had four positions to scan. The second part was more tricky
+  ##  in that we had to implement a general solution (well, ok one
+  ##  could have done an explicit implementation but that would be
+  ##  ... a lot of code). The general sultion does not return the
+  ##  start-of-message sequence. It's tricky to follow the code as it
+  ##  is - could probably been done in a more elegant way.
+
+  def day6a() do
+    {:ok, <<a,b,c,d, rest::binary>>} = File.read("day6.csv")
+    {mrk, n, _} = marker(a, b, c, d, rest, 4)
+    {mrk, n}
+  end
+
+  ##  checking that the message function is ok
+  def day6aa() do
+    {:ok, input} = File.read("day6.csv")
+    {:ok, n, _} = message(to_charlist(input), 4, 0)
+    {:ok, n+4}
+  end
+  
+  def day6b() do
+    {:ok,input} = File.read("day6.csv")
+    <<a,b,c,d, rest::binary>> = input
+    {_, n, rest} = marker(a, b, c, d, rest, 0)
+    {:ok, c, _} = message(to_charlist(rest), 14, 0)
+    {:ok, c + n}
+  end
+    
+
+  ## The explicit solution, why not - not a lot of code
+  
+  def marker(a, a, c, d, <<e, rest::binary>>, n) do
+    marker(a, c, d, e, rest, n+1)
+  end
+  def marker(a, b, a, d, <<e, rest::binary>>, n) do
+    marker(b, a, d, e, rest, n+1)
+  end  
+  def marker(a, b, c, a, <<e, rest::binary>>, n) do
+    marker(b, c, a, e, rest, n+1)
+  end  
+  def marker(_, b, b, d, <<e, f, rest::binary>>, n) do
+    marker(b, d, e, f, rest, n+2)
+  end    
+  def marker(_, b, c, b, <<e, f, rest::binary>>, n) do
+    marker(c, b, e, f, rest, n+2)
+  end      
+  def marker(_, _, c, c, <<e, f, g, rest::binary>>, n) do
+    marker(c, e, f, g, rest, n+3)
+  end      
+  def marker(a, b, c, d, rest, n) do
+    {[a,b,c,d], n+4, rest}
+  end      
+
+  ## The general solution, does not return the start-of-message
+  ## sequence.
+  
+  def message([a|rest], k, n) do
+    case msg(a, rest, k) do
+      {:cont, rest, c} -> message(rest, k, n + (k-c) + 1)
+      {:found, rest} -> {:ok, n+k, rest}
+    end
+  end
+
+  def msg(_, rest, 1) do {:found, rest} end
+  def msg(a, rest, k) do
+    case ms(a, rest, k) do
+      :cont -> {:cont, rest, k}
+      :clear -> msg(hd(rest), tl(rest), k-1)
+    end
+  end
+  
+  def ms(_, _, 1) do :clear end
+  def ms(a, rest, j) do
+    case rest do
+      [^a|_] ->  :cont
+      [_|rest] -> ms(a, rest, j-1)
+    end
+  end
+  
+  
+
+
 end
+
+
