@@ -1,8 +1,17 @@
 defmodule Day3 do
 
+  ## Day 3. I here decided to sort the content of the two pockets
+  ## already in the first task. This reduces the complexity of
+  ## searching from O(n^2) to O(n) and the sorting is only
+  ## O(n*lg(n)). The list of items is not very large so it might not
+  ## matter but the coding is simpler.
+  ##
+  ## Breaking the backpacks into groups of three was done in a clever
+  ## (?) reduce operation. Sorting and searching was alsmost the same.
+
   def task_a() do
     File.stream!("day3.csv") |>
-      Stream.map( fn (r) -> String.to_charlist(r) end) |>
+      Stream.map(fn (r) -> String.to_charlist(r) end) |>
       Stream.map(fn (r) -> Enum.drop(r, -1) end) |>
       Stream.map(fn(r) -> Enum.split(r, div(length(r),2)) end) |>
       Stream.map(fn({l,r}) -> {Enum.sort(l), Enum.sort(r)} end) |>

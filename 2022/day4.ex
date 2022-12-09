@@ -1,7 +1,7 @@
 defmodule Day4 do
 
   ## Day 4, no problem. One could write it even more compact by
-  ## stransforming the list of strings from the splot oepration to a
+  ## stransforming the list of strings from the split operation to a
   ## list of integers using a map operation.
 
   def input() do

@@ -35,13 +35,13 @@ defmodule Day9 do
   end
   
 
-  def day9a() do
+  def task_a() do
     {_, _, trail} = input() |>
       Enum.reduce({{0,0},[{0,0}], %{}}, fn(move, {head,tail,trail}) -> update(move, head, tail , trail) end)
     length(Map.keys(trail))
   end
 
-  def day9b() do
+  def task_b() do
     {_head, _tail, trail} = input() |>
       Enum.reduce({{0,0},[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}], %{}}, fn(move, {head,tail,trail}) -> update(move, head, tail , trail) end)
     length(Map.keys(trail))
