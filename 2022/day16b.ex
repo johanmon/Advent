@@ -2,8 +2,8 @@ defmodule Day16b do
 
   def dynamic(t) do
     start = :AA
-    ## map = Day16.sample(start)
-    map = Day16.input(start)
+    map = Day16.sample(start)
+    ## map = Day16.input(start)
     valves = Enum.map(map, fn({valve,_}) -> valve end)
     {max, _} = dynamic(t, {:pos, start}, {:pos, start}, valves, 1, 0, map, Map.new())
     max
@@ -19,6 +19,7 @@ defmodule Day16b do
     {t*rate, mem}
   end  
 
+
   def dynamic(t, a, b, valves, open, rate, map, mem) do
     case mem[{order(a, b), t, open}] do
       nil ->
@@ -31,7 +32,19 @@ defmodule Day16b do
     end
   end
 
-
+  def elefant(t, {:tr, k, a}, {:tr, k, b}, valves, open, rate, map, mem) do
+    {max, mem} = elefant(t-k, {:pos, a}, {:pos, b}, valves, open, rate, map, mem)
+    {max + rate*k, mem}
+  end
+  def elefant(t, {:tr, ka, a}, {:tr, kb, b}, valves, open, rate, map, mem) when ka < kb do
+    {max, mem} = elefant(t-ka, {:pos, a}, {:tr, kb-ka, b}, valves, open, rate, map, mem)
+    {max + rate*ka, mem}    
+  end
+  def elefant(t, {:tr, ka, a}, {:tr, kb, b}, valves, open, rate, map, mem) do
+    {max, mem} = elefant(t-kb, {:tr, ka-kb, a}, {:pos, b}, valves, open, rate, map, mem)
+    {max + rate*kb, mem}    
+  end  
+  
   def elefant(t, {:tr, k, a}, elf, valves, open, rate, map, mem) do
     {max, mem} =  elf(t, step(k, a), elf, valves, [], open, rate, map, mem)
     {max + rate , mem}
