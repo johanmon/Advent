@@ -1,6 +1,5 @@
 defmodule Day16 do
 
-
   def input(start) do
     File.stream!("day16.csv") |>
       parse() |>
@@ -41,6 +40,16 @@ defmodule Day16 do
 
   end
 
+  def short(map, valve) do
+    {_, tunnels} = Map.get(map, valve)
+    map = Map.delete(map, valve)
+    lst = Map.to_list(map)
+    Enum.reduce(extend(Enum.map(lst, fn({v, {r, t}}) ->
+	      {v, r, t} end),
+	  valve, tunnels),
+      Map.new(),
+      fn({v,r,t}, map) -> Map.put(map, v, {r,t}) end)
+  end
 
   def extend([], extended) do Enum.reverse(extended) end  
   def extend([{v,_,t}|rest], extended) do
