@@ -15,14 +15,15 @@ defmodule Day16c do
     
     valves = List.delete(valves, start)
 
-    partitions = partition(valves)
+    :io.format("number of valves : ~w\n", [length(valves)])
+    
+    partitions = partition_first(valves)
 
-    partitions = Enum.map(partitions, fn({a,b}) ->
-      {best(26,[start|a], dist), best(26, [start|b], dist)}
+    :io.format("number of partitions : ~w\n", [length(partitions)])    
+    
+    Enum.reduce(partitions, 0, fn({a,b}, max) ->
+      max(best(26,[start|a], dist) + best(26, [start|b], dist), max)
     end)
-
-  {x, y} = Enum.max(partitions, fn({a1,b1}, {a2,b2}) -> a1+b1  > a2+b2 end)
-  x + y
   end
 
   def best(t, seq, dist) do
@@ -30,8 +31,7 @@ defmodule Day16c do
       max(flow(t, seq, dist), max)
     end)
   end
-  
-      
+
   
   def permute([a]) do [[a]] end
   def permute(seq) do
@@ -41,7 +41,17 @@ defmodule Day16c do
       Enum.map(permuted, fn(rest) -> [x|rest] end) ++ all
     end)
   end
-  
+
+  def partition_first([]) do [{[], []}]  end  
+  def partition_first([v|rest])  do
+    part = partition(rest)
+    partition_first(part, v)
+  end
+
+  def partition_first([], _) do [] end
+  def partition_first([{a, b}|rest], v) do
+    [{[v|a],b} | partition_first(rest, v)]
+  end    
 
   def partition([]) do [{[], []}]  end  
   def partition([v|rest])  do
