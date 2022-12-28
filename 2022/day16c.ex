@@ -1,10 +1,35 @@
 defmodule Day16c do
 
+
+  ## Day 16, this took me some time :-) The trategy is to partition
+  ## the set of valves into two sets. Since you and the elefant can
+  ## not open the same valves the set of vlaves need to be partitioned
+  ## in two.
+  ##
+  ## The second step is to take a set of valves and for each
+  ## permutation calculate the total flow after 26 min. Given a
+  ## partition we can thus caclulate teh maximum combined flow from
+  ## the two sets.
+  ##
+  ## All good and Dandy but the number of permutations of sets of 14
+  ## valves is quite large (... large!) so we need to take a wild
+  ## guess. It is more likely that the total maximum flow is reached
+  ## if you and the elefant open more or less the same number of
+  ## valves so we begin to examine the partitions were either has
+  ## eight valves (15 valves in the set). 
+  ##
+  ## This still takes some time but if we print the best sofar we can
+  ## give it a try :-)
+
+  ## sequences for the sample that maximise flow
+  ##
   ## [AA: 0,  DD: 20, BB: 13, JJ: 21, HH: 22, EE: 3, CC: 2]  flow(t) = 1651
-  
+  ## {[AA: 0, JJ: 21, BB: 13, CC: 2], [AA: 0, DD: 20, HH: 22, EE: 3]}
+
+
   def task_b() do
     start = :AA
-    ##graph = Day16.sample(start)
+    #graph = Day16.sample(start)
     graph = Day16.input(start)
 
     dist = shortest(graph)
@@ -20,15 +45,47 @@ defmodule Day16c do
     partitions = partition_first(valves)
 
     :io.format("number of partitions : ~w\n", [length(partitions)])    
+
+    k = 8
+    #k = 3
+    selected = Enum.filter(partitions, fn({a,b}) -> (length(a) == k) || (length(b) == k) end)
+
+    :io.format("number of selected : ~w\n", [length(selected)])
     
-    Enum.reduce(partitions, 0, fn({a,b}, max) ->
-      max(best(26,[start|a], dist) + best(26, [start|b], dist), max)
+    max = Enum.reduce(selected, 0, fn({a,b}, max) ->
+      {best_a, _seq_a} = best(26, start, a, dist)
+      {best_b, _seq_b} = best(26, start, b, dist)
+      #:io.format("try: ~w  ~w \n", [a, b])
+      #:io.format("~w  ~w: ~w  ~w \n", [max, best_a+best_b, seq_a, seq_b])
+      :io.format("(~w  ~w), ", [max, best_a+best_b])
+      max(best_a + best_b, max)
     end)
+    :io.format("\n selected length: ~w  max ~w \n", [k, max])
+
+    k = 9
+    #k = 4
+    
+    selected = Enum.filter(partitions, fn({a,b}) -> (length(a) == k) || (length(b) == k) end)
+
+    :io.format("number of selected : ~w\n", [length(selected)])
+    
+    max = Enum.reduce(selected, 0, fn({a,b}, max) ->
+      {best_a, _seq_a} = best(26, start, a, dist)
+      {best_b, _seq_b} = best(26, start, b, dist)      
+      max(best_a + best_b, max)
+    end)
+    :io.format("\n selected length: ~w  max ~w \n", [k, max])
+
   end
 
-  def best(t, seq, dist) do
-    Enum.reduce(permute(seq), 0, fn(seq,max) ->
-      max(flow(t, seq, dist), max)
+  def best(t, start, seq, dist) do
+    Enum.reduce(permute(seq), {0,:na}, fn(seq, {max,_}=sofar) ->
+      flow = flow(t, [start|seq], dist)
+      if  flow > max do
+	{flow, seq}
+      else
+	sofar
+      end
     end)
   end
 
@@ -42,6 +99,9 @@ defmodule Day16c do
     end)
   end
 
+  ## We only need to try half of the partitions since the rest are
+  ## mirror images.
+  
   def partition_first([]) do [{[], []}]  end  
   def partition_first([v|rest])  do
     part = partition(rest)
@@ -65,6 +125,9 @@ defmodule Day16c do
   end  
 
 
+  ## The total flow is quite easy to calculate given the table with
+  ## shortest distance between any two valves. 
+  
   def flow(t, valves, dist) do flow(t, valves, 0, dist, 0) end
     
   def flow(t, [_], rate, _dist, total) do
