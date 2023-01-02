@@ -1,5 +1,33 @@
 defmodule Day19 do
 
+  ##  Day 19, the first task was rather simple. Dynamic programming
+  ##  solves the problem but I also added restrictions on which paths
+  ##  to follow i.e. (big mistake) if you can build a geode robot - do
+  ##  so as soon as you have the resources don't build a obsidian for
+  ##  example and don't build a clay robot ... 
+  ##
+  ##  To solve the second part you need to cut branches early. One
+  ##  solution is to keep track of the best solution so far and
+  ##  determine that there is no way to find a better solution even if
+  ##  you had unlimited of resources and could build a geode robot a
+  ##  minute.
+  ##
+  ##  Why this task took me so long is that my assumption that it
+  ##  would always pay off to build a geode robot as soon as possible,
+  ##  never build a clay robot if you can build a obsidian robot
+  ##  etc. It turns out that this is not the case but it works for the
+  ##  samples. Realizing that this was a problem took some time :-)
+  ##
+  ##  The implementation generates the path and also uses a trail to
+  ##  follow. The trail can be used for debugging by using a trail
+  ##  that you know will generate a solution (for example the ones
+  ##  give) and then see if and which restructions fail.
+  ##
+  ##  There is also a itertive procedure that starts searching down to
+  ##  level 28 to find the best solution and then search deeper and
+  ##  deeper (does not pay off but was good to have when dubugging).
+  
+  
   def task_a() do
     input() |>
       Enum.map(fn(r) -> parse(r) end)  |>
@@ -11,8 +39,12 @@ defmodule Day19 do
     input() |>
       Enum.take(3) |>
       Enum.map(fn(r) -> parse(r) end)  |>
-      Enum.map(fn(blue) -> quality(blue, 32) end) |>
-      Enum.reduce(0, fn({g,i,_}, a) -> g*i+a end)
+      Enum.map(fn(blue) ->
+	{g,id,path} = quality(blue, 32)
+	:io.format(" id = ~w, geode = ~w\n  path = ~w\n", [g, id, path])
+	{g,id,path}
+      end) |>
+      Enum.reduce(1, fn({g,_,_}, a) -> g*a end)
   end  
 
   def debug(k, t, brk) do
@@ -26,7 +58,6 @@ defmodule Day19 do
     quality(blue, t, brk, path)
   end
   
-
   def iterative(k) do
     {:ok, blue} = sample() |>
       Enum.map(fn(r) -> parse(r) end) |>
@@ -34,6 +65,9 @@ defmodule Day19 do
     iterative(28, blue, 0)
   end
 
+  def iterative(blue, t) when t > 4 do 
+    iterative(t-4, blue, 0)
+  end
   
   def iterative(32, blue, brk) do
     {brk, id, path} = quality(blue, 32, brk, List.duplicate(:*, 32))
@@ -45,7 +79,6 @@ defmodule Day19 do
     :io.format("iterative: t = ~w,  brk = ~w\n", [t, brk])
     iterative(t+1, blue, brk)
   end
-
 
   def limit(k, t, brk)  do
     {:ok, blue} = sample() |>
@@ -82,105 +115,84 @@ defmodule Day19 do
     end
   end
 
-  def brk(t, brk, {_orer, _clayr, _obsidianr, geoder}=robots, {_ore, clay, obsidian, geode}=resources, {_, _, _, {_,cc,oc}}=specs, mem, nxts) do
+  def brk(t, brk, robots, resources, specs, mem, nxts) do
 
-    case t do
-      1 -> if ( geoder < (brk-geode)) do
-      	{{geode, []}, mem}
-      else
-	search(t, brk, robots, resources, specs, mem, nxts)
+    geoder = elem(robots, 3)
+    geode = elem(resources, 3)
+
+    if (geode >= brk) do
+      search(t, brk, robots, resources, specs, mem, nxts)
+    else
+      case t do
+	1 -> if ( geoder < (brk-geode) ) do
+      	  {{geode, []}, mem}
+	else
+	  search(t, brk, robots, resources, specs, mem, nxts)
+	end
+	t ->  if ( ((geoder*t) + (Enum.sum(1..(t-1)))) < (brk - geode))  do  
+          {{geode, []}, mem}
+	else
+          search(t, brk, robots, resources, specs, mem, nxts)
+	end
       end
-      2 -> if ( ((geoder*2) < (brk-geode)) or (((geoder*2) < (brk-geode-1)) and clay >= cc and obsidian >= oc) ) do
-	#:io.format(" break : t = ~w, brk = ~w  geode = ~w\n", [t, brk, geode])
-      	{{geode, []}, mem}
-      else
-	search(t, brk, robots, resources, specs, mem, nxts)
-      end
-      3 -> if ( ((geoder*3) < (brk-geode-1)) or (((geoder*3) < (brk-geode-3)) and clay >= cc and obsidian >= oc) ) do
-	#:io.format(" break : t = ~w, brk = ~w  geode = ~w\n", [t, brk, geode])
-      	{{geode, []}, mem}
-      else
-	search(t, brk, robots, resources, specs, mem, nxts)
-      end
-      4 -> if ( ((geoder*4) < (brk-geode-3)) or  (((geoder*4) < (brk-geode-6)) and clay >= cc and obsidian >= oc)     ) do
-	#:io.format(" break : t = ~w, brk = ~w  geode = ~w\n", [t, brk, geode])
-      	{{geode, []}, mem}
-      else
-	search(t, brk, robots, resources, specs, mem, nxts)
-      end
-      #_ ->
-      #  search(t, brk, robots, resources, specs, mem, nxts)
-       t ->  if ( ((geoder*t) < (brk-geode-(Enum.sum(1..(t-2))))) or (((geoder*t) < (brk-geode-Enum.sum(1..(t-1)) )) and clay >= cc and obsidian >= oc))  do  
-        	#:io.format(" break : t = ~w, brk = ~w  geode = ~w\n", [t, brk, geode])
-        {{geode, []}, mem}
-       else
-        	search(t, brk, robots, resources, specs, mem, nxts)
-       end
     end
-    
   end
   
   def search(t, brk, robots, resources, {orec, clayc, obsidianc, geodec}=specs, mem, [nxt|nxts]) do
 
-    all = []
+    best = {0, []}
     
-    {all, brk, mem} = if( afford(orec, resources) and next(nxt,:ore) ) do
+    {best, brk, mem} = if( afford(orec, resources) and next(nxt,:ore) ) do
       {{max, path}, mem} = dynamic(t-1, brk, build(:ore, robots), collect(robots, orec, resources), specs, mem, nxts)
-      if max != 0 do
-	{[{max, [:ore|path]}|all], max(max,brk), mem}
+      if max > brk do
+	{{max, [:ore|path]}, max, mem}
       else
-	{all, brk, mem}
+	{best, brk, mem}
       end
     else
-      {all, brk, mem}
+      {best, brk, mem}
     end
-    {all, brk, mem} = if( afford(clayc, resources) and  next(nxt,:clay)) do
+    {best, brk, mem} = if( afford(clayc, resources) and  next(nxt,:clay)) do
       {{max,path}, mem} = dynamic(t-1, brk, build(:clay, robots), collect(robots, clayc, resources), specs, mem, nxts)
-      if max != 0 do
-	{[{max, [:clay|path]}|all], max(max,brk), mem}
+      if max > brk do
+	{{max, [:clay|path]}, max, mem}
       else
-	{all, brk, mem}
+	{best, brk, mem}
       end
     else
-      {all, brk, mem}
+      {best, brk, mem}
     end
-    {all,brk,mem} = if( afford(obsidianc, resources) and  next(nxt,:obsidian)) do
+    {best,brk,mem} = if( afford(obsidianc, resources) and   !afford(geodec, resources) and  next(nxt,:obsidian)) do
       {{max,path}, mem} = dynamic(t-1, brk, build(:obsidian, robots), collect(robots, obsidianc, resources), specs, mem, nxts)
-      if max != 0 do
-	{[{max,[:obsidian|path]}|all], max(max,brk), mem}
+      if max > brk do
+	{{max,[:obsidian|path]}, max, mem}
       else
-	{all, brk, mem}
+	{best, brk, mem}
       end
     else
-      {all, brk, mem}
+      {best, brk, mem}
     end
-    {all,brk,mem} = if( afford(geodec, resources) and next(nxt,:geode)) do
+    {best,brk,mem} = if( afford(geodec, resources) and next(nxt,:geode)) do
       {{max,path}, mem} = dynamic(t-1, brk, build(:geode, robots), collect(robots, geodec, resources), specs, mem, nxts)
-      if max != 0 do
-	{[{max, [:geode|path]}|all], max(max,brk), mem}
+      if max > brk do
+	{{max, [:geode|path]}, max, mem}
       else
-	{all, brk, mem}
+	{best, brk, mem}
       end
     else
-      {all, brk, mem}
+      {best, brk, mem}
     end
-    {all, _, mem} = if( !afford(geodec, resources) and next(nxt,:na) ) do
+    {best, _, mem} = if(  !afford(geodec, resources) and next(nxt,:na) ) do  # 
       {{max,path}, mem} = dynamic(t-1, brk, robots, collect(robots, resources), specs, mem, nxts)
-      if max != 0 do
-	{[{max, [:na|path]}|all], max(max,brk), mem}
+      if max > brk do
+	{{max, [:na|path]}, max, mem}
       else
-	{all, brk, mem}
+	{best, brk, mem}
       end
     else
-      {all, brk, mem}
+      {best, brk, mem}
     end
-
-    if (all == []) do
-       ## :io.format("\n\n t = ~w nxt = ~w  , nxts = ~w resources = ~w  specs = ~w\n", [t, nxt, nxts, resources, specs])
-       {{0,[]}, mem}
-    else
-       {Enum.max(all, fn({x,_},{y,_}) -> x > y end), mem}
-    end
+    {best, mem}
   end
 
   def next(nxt, rob) do  (nxt == rob) or (nxt == :*)  end
@@ -200,13 +212,10 @@ defmodule Day19 do
     (a0 <= a1 and b0 <= b1 and c0 <= c1)
   end
   
-  def spend({a0, b0, c0}, {ar,br,cr,dr}) do
-    {ar-a0, br-b0, cr-c0, dr}
-  end
-
-    def collect({a0, b0, c0, d0}, {a1,b1,c1}, {ar,br,cr,dr}) do
+  def collect({a0, b0, c0, d0}, {a1,b1,c1}, {ar,br,cr,dr}) do
     {ar+a0-a1, br+b0-b1, cr+c0-c1, dr+d0}
   end    
+  
   def collect({a0, b0, c0, d0}, {ar,br,cr,dr}) do
     {ar+a0, br+b0, cr+c0, dr+d0}
   end    
@@ -223,7 +232,7 @@ defmodule Day19 do
   def cost([ore: o, obsidian: s]) do {o,0,s} end
 
 
-  def solution() do
+  def solutions() do
     {[:na,       :na,    :na,    :na,       :ore,   :na,       :clay,     :clay,  :clay,     :clay,
      :clay,     :clay,  :clay,  :obsidian, :na,    :obsidian, :obsidian, :na,    :obsidian, :geode,
      :obsidian, :geode, :geode, :geode,    :na,    :geode,    :geode,    :na,    :geode,    :geode,
@@ -232,9 +241,9 @@ defmodule Day19 do
       :obsidian, :clay, :obsidian, :obsidian, :obsidian, :ore, :obsidian, :obsidian, :geode, :geode,
       :obsidian, :geode, :obsidian, :geode, :geode, :clay, :geode, :geode,  :clay, :geode,
       :geode, :clay],
-     [],
-     [],
-     []}
+     [:na, :na, :na, :na, :ore, :na, :na, :ore, :na, :clay, :ore, :clay, :clay, :clay, :clay, :clay, :obsidian, :clay, :obsidian, :ore, :obsidian, :clay, :obsidian, :clay, :geode, :obsidian, :obsidian, :obsidian, :geode, :ore, :geode, :ore],
+     [:na, :na, :na, :ore, :na, :ore, :na, :clay, :clay, :clay, :clay, :clay, :clay, :clay, :obsidian, :clay, :clay, :obsidian, :clay, :obsidian, :clay, :obsidian, :geode, :obsidian, :obsidian, :geode, :obsidian, :geode, :obsidian, :geode, :geode, :ore],
+     [:na, :na, :na, :na, :ore, :na, :na, :ore, :na, :ore, :clay, :clay, :clay, :clay, :clay, :clay, :obsidian, :clay, :obsidian, :obsidian, :obsidian, :obsidian, :obsidian, :geode, :ore, :obsidian, :geode, :obsidian, :geode, :ore, :geode, :ore]}
   end
   
   
