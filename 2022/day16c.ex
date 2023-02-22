@@ -1,14 +1,15 @@
 defmodule Day16c do
 
+  ## Come to think about it this is not a good strategy!
 
-  ## Day 16, this took me some time :-) The trategy is to partition
+  ## Day 16, this took me some time :-) The strategy is to partition
   ## the set of valves into two sets. Since you and the elefant can
-  ## not open the same valves the set of vlaves need to be partitioned
+  ## not open the same valves the set of valves need to be partitioned
   ## in two.
   ##
   ## The second step is to take a set of valves and for each
   ## permutation calculate the total flow after 26 min. Given a
-  ## partition we can thus caclulate teh maximum combined flow from
+  ## partition we can thus caclulate the maximum combined flow from
   ## the two sets.
   ##
   ## All good and Dandy but the number of permutations of sets of 14
