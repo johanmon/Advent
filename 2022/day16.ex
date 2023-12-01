@@ -1,115 +1,84 @@
 defmodule Day16 do
-
-  def input(start) do
-    File.stream!("day16.csv") |>
-      parse() |>
-      map(start)
-  end
-
-  def sample(start) do
-    test() |>
-      parse() |>
-      map(start)
-  end
   
-  def debug() do
-    map(parse(test()), :AA)
+  def task_a(t) do
+    start = :AA
+    {closed, graph} = Cave.sample(start)
+    ##{closed, graph} = Cave.input(start) 
+    elem(check(start, t, closed, graph, Map.new()),0)
   end
 
-  def map(input, start) do
-    all = Enum.map(input, fn({valve, rate, valves}) ->
-      {valve, rate, Enum.map(valves, fn(vl) -> {vl, 1} end)}
-    end)
-    {valves, conn} = Enum.split_with(all,  fn({valve,rate,_}) -> (rate != 0) or (valve == start) end)
+  def task_b(t) do
+    start = :AA
+    {[frst|closed], graph} = Cave.sample(start)
+    ##{[frst|closed], graph} = Cave.input(start) 
+    elem(split(start, t, closed, [frst], [], graph, Map.new()),0)
+  end
 
-    extended = extend(conn, conn)    
+  def split(start, t, [], you, elefant,  graph, mem) do
+    :io.format("you: ~w\t\telefant: ~w", [you, elefant])
+    {m1, mem} = search(start, t, you, graph, mem)
+    {m2, mem} = search(start, t, elefant, graph, mem)    
+    total = m1+m2
+    :io.format("\t\ttotal: ~w\n", [m1+m2])
+    ##:io.put_chars('.')
+    {total, mem}
+  end
+  def split(start, t, [valve|closed], you, elefant,  graph, mem) do
+    {m1, mem} = split(start, t, closed, [valve|you], elefant, graph, mem)
+    {m2, mem} = split(start, t, closed, you, [valve|elefant], graph, mem)    
+    {max(m1,m2), mem}
+  end
+
+  ## The memory is organized so that it can be sused in several
+  ## searches. The key is what is left, not how we got there, what
+  ## valves are currently open or the rate at which the pressure is
+  ## released.
+  
+  def check(valve, t, closed, graph, mem) do
+    case mem[{valve, t, closed}] do
+      nil ->
+	{max, mem} = search(valve, t, closed, graph, mem)
+	mem = Map.put(mem, {valve, t, closed}, max)
+	{max, mem}
+      max ->
+	{max, mem}
+    end
+  end
+
+  def search(_, 0, _, _, _, mem) do
+    {0, mem}
+  end  
+  def search(_, _, [], _, mem) do
+    {0, mem}
+  end  
+  def search(valve, t, closed, graph, mem) do
+
+    {rt, tunnels} = Cave.get(graph,valve)
+
+    ## mx will be the best option so far
     
-    map = Enum.reduce(extended, valves, fn({v0,_, t0}, valves) ->
-      extend(valves, v0, t0)
-    end)
-
-    map = if List.keymember?(map, start, 0) do
-      map
+    ## If we have a valve to open, that might be an idea
+    {mx, mem} = if (rt > 0 and Enum.member?(closed, valve)) do
+      removed = List.delete(closed, valve)
+      {ox, mem} = check(valve, t-1, removed, graph, mem)
+      ox = ox + (rt * (t-1))
+      {ox, mem}
     else
-      [List.keyfind(extended, start, 0) | map]
+      {0, mem}
     end
 
-    Enum.reduce(map, Map.new(), fn({valve, rate, tunnels}, map) ->
-      Map.put(map, valve, {rate, tunnels})
-    end)
-
+    ## Try moving to each of the tunnels.
+    
+    Enum.reduce(tunnels, {mx, mem}, 
+      fn({nxt, d}, {mx, mem}) ->
+        if (d < t) do
+	  {ox, mem} = check(nxt, t-d, closed, graph, mem)
+	  {max(ox,mx), mem}
+	else
+	  {mx, mem}
+	end
+      end)
   end
 
-  def short(map, valve) do
-    {_, tunnels} = Map.get(map, valve)
-    map = Map.delete(map, valve)
-    lst = Map.to_list(map)
-    Enum.reduce(extend(Enum.map(lst, fn({v, {r, t}}) ->
-	      {v, r, t} end),
-	  valve, tunnels),
-      Map.new(),
-      fn({v,r,t}, map) -> Map.put(map, v, {r,t}) end)
-  end
-
-  def extend([], extended) do Enum.reverse(extended) end  
-  def extend([{v,_,t}|rest], extended) do
-    extend(extend(rest, v, t), extend(extended, v, t))
-  end
-
-  def extend(conn, v0, t0) do
-    Enum.map(conn, fn({v1,r1,t1}) ->
-      extended = extend(v1, t1, v0, t0)
-      {v1, r1, extended}
-    end)
-  end
-
-  def extend(v1,t1, v0, t0) do
-      case List.keyfind(t1, v0, 0) do
-	{v0, _k0} ->
-	  removed = List.keydelete(t1, v0, 0)
-	  Enum.reduce(t0, removed, fn({v2,k2}, acc) ->
-	    if (v2 != v1 ) do
-	      case List.keyfind(removed, v2, 0) do
-		{v2,k3} ->
-		  [{v2, min(k3, k2+1)}|List.keydelete(acc, v2,0)]
-		nil ->
-		  [{v2, k2+1}|acc]
-	      end
-	    else
-	      acc
-	    end
-	  end)
-	nil ->
-	  t1
-      end
-  end
-  
-
-  def parse(input) do
-    Enum.map(input, fn(row) ->
-      [valve, rate, valves] = String.split(String.trim(row), ["=", ";"])
-      [_, valve | _ ] = String.split(valve, [" "])
-      valve = String.to_atom(valve)
-      {rate,_} = Integer.parse(rate)
-      [_,_,_,_, _| valves] = String.split(valves, [" "])
-      valves = Enum.map(valves, &String.to_atom(String.trim(&1,",")))
-      {valve, rate, valves}
-    end)
-  end
-
-
-  def test() do
-    ["Valve AA has flow rate=0; tunnels lead to valves DD, II, BB",
-     "Valve BB has flow rate=13; tunnels lead to valves CC, AA",
-     "Valve CC has flow rate=2; tunnels lead to valves DD, BB",
-     "Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE",
-     "Valve EE has flow rate=3; tunnels lead to valves FF, DD",
-     "Valve FF has flow rate=0; tunnels lead to valves EE, GG",
-     "Valve GG has flow rate=0; tunnels lead to valves FF, HH",
-     "Valve HH has flow rate=22; tunnel leads to valve GG",
-     "Valve II has flow rate=0; tunnels lead to valves AA, JJ",
-     "Valve JJ has flow rate=21; tunnel leads to valve II"]
-  end
-							    
 
 end
