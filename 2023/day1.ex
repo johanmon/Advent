@@ -59,11 +59,11 @@ defmodule Day1 do
       r |>
       String.replace("one",   "o1e") |>
       String.replace("two",   "t2o") |>    
-      String.replace("three", "t3") |>
+      String.replace("three", "t3e") |>
       String.replace("four",  "4") |>
-      String.replace("five",  "5") |>
+      String.replace("five",  "5e") |>
       String.replace("six",   "6") |>    
-      String.replace("seven", "7") |>
+      String.replace("seven", "7n") |>
       String.replace("eight", "e8t") |>
       String.replace("nine",  "9e")
   end
