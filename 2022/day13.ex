@@ -1,7 +1,7 @@
 defmodule Day13 do
 
   ## Day 13 - I'm not parsing something that is almost perfect to
-  ## straight with. A quick Emacs keyboard-macro does the trick in
+  ## start with. A quick Emacs keyboard-macro does the trick in
   ## no-time.
   ##
   ## The task was rather simple, the order/2 function was almost

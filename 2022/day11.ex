@@ -1,7 +1,7 @@
 defmodule Day11 do
 
   ## Day 11, ok some Sunday fun where it did require some
-  ## thinking. Firts of all I sciped parsing the text input and
+  ## thinking. First of all I skipped parsing the text input and
   ## instead used some Emacs keyboard macros to turn the monkies into
   ## some sensible structured data. I encoded the increment of the
   ## worry level as a function but left the test and which monkey to
@@ -9,7 +9,7 @@ defmodule Day11 do
   ## encoded in the function as well but it then felt like an ok idea
   ## since I didn't know how to actualy use the data.
 
-  ## The first task in teh end quite simple. The tricky part was
+  ## The first task in the end quite simple. The tricky part was
   ## understanding what was going on i.e. the item itself had a
   ## chainging worrying level but your worry level did not increas
   ## etc. Ok, after things were straightened out and realizing that

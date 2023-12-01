@@ -1,11 +1,11 @@
 defmodule Day9 do
 
-  ## Day 9 raher tricky to get the tail to follow the head. Fir the
-  ## first solution the tail was siply a position. In the second task
+  ## Day 9 raher tricky to get the tail to follow the head. For the
+  ## first solution the tail was simply a position. In the second task
   ## the tail was a list of positons and the update/3 function only
   ## had one clause.
   ##
-  ## A squence of moves (U 5) is conputed as a sequence of on step
+  ## A squence of moves (U 5) is computed as a sequence of on step
   ## moves. I don't think there is any advantage of trying to do
   ## several moves in one go.
   ##

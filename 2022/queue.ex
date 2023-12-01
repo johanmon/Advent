@@ -5,6 +5,10 @@ defmodule Queue do
     {[],[]}
   end
 
+  def new(init) do
+    {init,[]}
+  end  
+
   def add({first,rest}, itm) do
     {first, [itm|rest]}
   end

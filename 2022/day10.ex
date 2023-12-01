@@ -1,6 +1,6 @@
 defmodule Day10 do
 
-  ## Day 10, this task was surprisibly simple to code but harder toii
+  ## Day 10, this task was surprisibly simple to code but harder to
   ## understand what was going on. The first part was fine all though
   ## it was strange how the register was updated after the second
   ## clock cycle. The second part was ... hello, what is going on...?
@@ -24,7 +24,7 @@ defmodule Day10 do
   ## benchmark.  
   ##
   ## To avoid doing the reverse operations we can use a List.foldr/3
-  ## function (stack is onbly 240 deep) and now we can do ity even
+  ## function (stack is only 240 deep) and now we can do it even
   ## faster :-)
 
   def input() do

@@ -18,7 +18,7 @@ defmodule Day14 do
   ## An intersting question is if one could do a recursive solution
   ## where you don't start from the top each time. After all the next
   ## grain will follow exactly the same path apart from the last step
-  ## sp one should be able to continue from a position one step before
+  ## so one should be able to continue from a position one step before
   ## a grain comes to rest. This would save us a lot of computations
   ## even though the complexity woudld probably be the same.
   ##
