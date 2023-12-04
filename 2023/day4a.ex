@@ -12,7 +12,7 @@ defmodule Day4a do
   def task() do
     File.stream!("day4.csv") |>
       Stream.map(fn(row) -> parse(row) end) |>
-      Stream.map(fn({:card, _, winning, you}) -> points(winning, you) end) |>
+      Stream.map(fn({:card, _, winning, you}) -> paints(winning, you) end) |>
       Enum.sum()
   end  
   
@@ -20,7 +20,7 @@ defmodule Day4a do
   ## Once the parsing is done this is quite simple. It makes a
   ## difference top sort the two sequences first. We turn an O(n²)
   ## algorithm into O(n*lg(n)). Not that n is very big but I think it
-  ## pays off.
+  ## pays off --  and then benchmarking shows that it does not :-(
 
   
   def points(winning, you) do
@@ -42,6 +42,15 @@ defmodule Day4a do
     end
   end
 
+  ## to benchmark.... turns out to be faster
+
+  def paints(winning, you) do
+    n = List.foldl(winning, 0,  fn(nr, acc) -> if ( Enum.any?(you, fn(x) -> (x == nr) end )) do acc+1 else acc end end)
+    if n == 0 do 0 else trunc(:math.pow(2,(n-1))) end
+  end
+  
+
+  
   def inc(0) do 1 end
   def inc(n) do 2*n end  
 

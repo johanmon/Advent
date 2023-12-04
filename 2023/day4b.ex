@@ -32,28 +32,11 @@ defmodule Day4b do
     [{:card, nr, i+k, winning, you}| update(n-1,k,rest)]
   end  
 
-  ## Only change the way oints are calculated. 
+  ## Only change the way points are calculated. 
   
   def points(winning, you) do
-    winning = Enum.sort(winning, fn(x,y) -> x < y end)
-    you = Enum.sort(you, fn(x,y) -> x < y end)
-    points(winning, you, 0)
+    List.foldl(winning, 0,  fn(nr, acc) -> if ( Enum.any?(you, fn(x) -> (x == nr) end )) do acc+1 else acc end end)
   end
-
-  def points([], _, n) do n end
-  def points(_, [], n) do n end
-  def points([x|xr]=xxr, [y|yr]=yyr, n)  do
-    cond do
-      x == y ->
-	points(xr, yr , inc(n))
-      x < y ->
-	points(xr, yyr , n)
-      true ->
-	points(xxr, yr , n)
-    end
-  end
-
-  def inc(n) do n+1 end  
 
 
   ## The difference is now that we keep a counter on each card that
