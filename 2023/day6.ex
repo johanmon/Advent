@@ -41,7 +41,33 @@ defmodule  Day6 do
   ## to find a solution as fast as possible and code rathe rthan think
   ## :-)
   ##
+  ## Once we have started to think in these lines one could of course
+  ## set up the equation:
   ##
+  ##            d/(t-k) = k   --  this is to break even
+  ##
+  ##            d = k(t-k)
+  ##            d = kt - k²
+  ##            k² -kt + d = 0
+  ##
+  ##            k = k/2 +/- sqrt( (k/2)² - d )
+  ##
+  ## So now we have our two solution and onky have to nudge them:
+  ##
+  ##            first = ceil( k/2 - sqrt( (k/2)^2 - d)
+  ##
+  ##            first = if ( d == (t-first)*first ) do
+  ##                first+1
+  ##            else  
+  ##                first
+  ##            end
+  ##
+  ##            last = t - first
+
+
+
+
+
 
 
   def test_a() do
@@ -67,7 +93,16 @@ defmodule  Day6 do
 
   def task_x() do
     List.foldl(Enum.map(input_b(), fn({:race, t, d}) -> winning_x(t,d) end),  1, fn(x,a) -> x*a end)
-  end      
+  end
+
+
+  def test_xx() do
+    List.foldl(Enum.map(sample_a(), fn({:race, t, d}) -> winning_xx(t,d) end), 1, fn(x,a) -> x*a end)
+  end
+
+  def task_xx() do
+    List.foldl(Enum.map(input_b(), fn({:race, t, d}) -> winning_xx(t,d) end),  1, fn(x,a) -> x*a end)
+  end        
   
 
   def winning_a(t, d) do
@@ -113,6 +148,21 @@ defmodule  Day6 do
 	winning_x(t, d, ceil(d/(t-k)))
     end
   end
+
+  ## And of course if we do some more thinking:
+
+  def winning_xx(t, d) do
+    first = ceil(t/2 - :math.sqrt(:math.pow(t/2, 2) - d))
+    first = if (d == (t-first)*first) do
+                first + 1
+            else
+                first
+            end
+    last = t - first;
+    :io.format(" first = ~w  last = ~w~n", [first, last])
+    last - first + 1
+  end
+  
   
 
   def input_a() do
