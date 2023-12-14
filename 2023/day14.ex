@@ -20,9 +20,11 @@ defmodule Day14  do
   ## Instead of having them in a list one could of cours put them in a
   ## map which could make it more efficient. ..... update: a map
   ## solution was implemented and it performed worse (aprx half the
-  ## spees) than the original solution with lists of lists. The
+  ## speed) than the original solution with lists of lists. The
   ## transpose function is rather efficent and since it will give us
   ## the rows or columns to work with the solution is quite efficient.
+  ##
+  ## update: the original version is now improved and faster.
   ##
   ## The second task was immediately identified as unsolvable by
   ## brute force. A small test showed that it would take hours just to
@@ -78,8 +80,8 @@ defmodule Day14  do
   def test_b(n) do
     String.split(sample(), "\n") |>
       Enum.map(&parse/1)  |>
-      spin(n, 1) |>
       transpose() |>
+      spin(n) |>
       Enum.map(&weight/1) |>
       Enum.sum()
   end
@@ -88,34 +90,29 @@ defmodule Day14  do
 
   def task_b(n) do
     String.split(File.read!("day14.csv"), "\n") |>
-      Enum.map(&parse/1)  |>
-      spin(n, 1) |>
-      transpose() |>
+      Enum.map(&parse/1) |>
+      transpose() |>    
+      spin(n) |>
       Enum.map(&weight/1) |>
       Enum.sum()
   end
 
-  def spin(rows, 0, _) do rows end
-  def spin(rows, n, i) do
-    north = transpose(rows)
 
-    #:io.format("weight after north transpose in spin ~w: ~w~n", [i, Enum.sum(Enum.map(north, &weight/1))])
-    
-    north = Enum.map(north, &tilt/1)
-    
-    west = transpose(north)
-    west = Enum.map(west, &tilt/1)
-
-    south = transpose(Enum.reverse(west))
-    south = Enum.map(south, &tilt/1)
-
-    east =  transpose(Enum.reverse(south))
-    east = Enum.map(east, &tilt/1)
-
-    rows = Enum.map(Enum.reverse(east), fn(r) -> Enum.reverse(r) end)
-
-    spin(rows, n-1, i+1)
+  def spin(north, n) do
+    Enum.reduce(1..n, north, fn(s, north) ->
+      north = Enum.map(north, &tilt/1)
+      west = rotate(north)
+      west = Enum.map(west, &tilt/1)
+      south = rotate(west)
+      south = Enum.map(south, &tilt/1)
+      east =  rotate(south)
+      east = Enum.map(east, &tilt/1)
+      north = rotate(east)
+      ## :io.format("north weight (~w): ~w~n", [s, Enum.reduce(north, 0, fn(r, s) -> weight(r) + s end)])
+      north
+    end)
   end
+
   
   def tilt([]) do  [] end
   def tilt([:round|rest]) do
@@ -146,6 +143,23 @@ defmodule Day14  do
     [Enum.map(m, &hd/1) | transpose(Enum.map(m, &tl/1))]
   end  
 
+  def rotate(rows) do
+    rotate(rows, [])
+  end
+  
+  def rotate([[]|_], transp) do transp end
+  def rotate(rows, transp) do
+    {layer, rest} = skim(rows)
+    rotate(rest, [layer|transp])
+  end
+
+  def skim([]) do {[],[]} end
+  def skim([[frst|row]|rows]) do
+    {layer, rest} = skim(rows)
+    {[frst|layer], [row|rest]}
+  end
+  
+  
   def weight(col) do
     elem(Enum.reduce(col, {length(col),0}, fn(c,{i,s}) ->
       case c do
@@ -172,14 +186,14 @@ defmodule Day14  do
   def test_map(n) do
     rows = String.split(sample(), "\n")
     {i, j, map} = Enum.reduce(rows, {0,0,%{}}, fn (row, {i,_, map}) -> i = i+1 ; {j, map} = parse_map(row,i,map) ;   {i,j,map}  end)
-    spin_map(map, i, j, n)
+    map = spin_map(map, i, j, n)
     weight_map(map, i)
   end
 
   def task_map(n) do
     rows = String.split(File.read!("day14.csv"), "\n")
     {i, j, map} = Enum.reduce(rows, {0,0,%{}}, fn (row, {i,_, map}) -> i = i+1 ; {j, map} = parse_map(row,i,map) ;   {i,j,map}  end)
-    spin_map(map, i, j, n)
+    map = spin_map(map, i, j, n)
     weight_map(map, i)
   end  
 
@@ -194,14 +208,16 @@ defmodule Day14  do
     end)
   end
 
-  def spin_map(board, _, _, 0) do  board end
+
   def spin_map(board, i, j, n) do
-    spun = tilt_north(board, i, j) |>
-      tilt_west(i, j) |>
-      tilt_south(i, j) |>
-      tilt_east(i, j)
-    #:io.format("weight: ~w  ~n", [weight(spun, i)])
-    spin_map(spun, i, j, n-1)
+    Enum.reduce(1..n, board, fn(s, board) ->
+      spun = tilt_north(board, i, j) |>
+	tilt_west(i, j) |>
+	tilt_south(i, j) |>
+	tilt_east(i, j)
+      ## :io.format("north weight (~w): ~w  ~n", [s, weight_map(spun, i)])
+      spun
+    end)
   end
 
   ## All tilt operations are very similar. Implementing them with
